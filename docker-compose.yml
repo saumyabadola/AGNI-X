@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL with PostGIS Geospatial Extension
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: thermatwin-postgis
+    environment:
+      POSTGRES_DB: thermatwin_postgis
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - thermatwin-network
+
+  # 2. FastAPI Geospatial Engine & ML Classification Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: thermatwin-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgrespassword@postgis:5432/thermatwin_postgis
+      NASA_FIRMS_MAP_KEY: ${NASA_FIRMS_MAP_KEY:-DEMO_MAP_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgis:
+        condition: service_healthy
+    networks:
+      - thermatwin-network
+    restart: unless-stopped
+
+  # 3. React + Tailwind CSS + Leaflet C2 Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: thermatwin-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - thermatwin-network
+    restart: unless-stopped
+
+volumes:
+  postgis_data:
+
+networks:
+  thermatwin-network:
+    driver: bridge
