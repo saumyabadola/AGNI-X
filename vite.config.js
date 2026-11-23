@@ -7,12 +7,12 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      // Proxy NASA FIRMS API requests to bypass browser CORS restrictions
-      '/nasa-firms-proxy': {
-        target: 'https://firms.modaps.eosdis.nasa.gov',
+      // Proxy all API requests to the AGNI-X Express backend (port 8000)
+      // NASA FIRMS key stays server-side — never exposed to the browser
+      '/api/v1': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/nasa-firms-proxy/, '')
+        secure: false
       }
     }
   }

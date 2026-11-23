@@ -11,7 +11,7 @@ export function SHAPExplainability({ shapFactors, aiConfidence }) {
           <BrainCircuit className="w-3.5 h-3.5" />
           <span>SHAP AI EXPLAINABILITY FACTORS</span>
         </div>
-        <span className="text-[10px] text-slate-400">TreeSHAP v2.4</span>
+        <span className="text-[10px] text-slate-400">AGNI-X Classifier v2.0</span>
       </div>
 
       <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">

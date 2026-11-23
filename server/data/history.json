@@ -1,0 +1,329 @@
+{
+  "updatedAt": "2026-11-23T19:02:39.923Z",
+  "batches": [
+    {
+      "timestamp": "2026-11-23T19:02:39.910Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 3,
+      "events": [
+        {
+          "id": "evt-m-1",
+          "timestamp": "2026-11-20T19:02:39.909Z",
+          "lat": 22.8214,
+          "lon": 69.7088,
+          "frp": 25.4,
+          "classification": "safe",
+          "confidence": 80,
+          "brightnessTempK": 320,
+          "closestZoneId": "IND-MUNDRA-03",
+          "closestZoneDistKm": null,
+          "facilityName": "Mundra Port Tank Farm"
+        },
+        {
+          "id": "evt-m-2",
+          "timestamp": "2026-11-21T19:02:39.909Z",
+          "lat": 22.8216,
+          "lon": 69.709,
+          "frp": 85,
+          "classification": "warning",
+          "confidence": 90,
+          "brightnessTempK": 410,
+          "closestZoneId": "IND-MUNDRA-03",
+          "closestZoneDistKm": null,
+          "facilityName": "Mundra Port Tank Farm"
+        },
+        {
+          "id": "evt-m-3",
+          "timestamp": "2026-11-22T19:02:39.909Z",
+          "lat": 22.8215,
+          "lon": 69.7089,
+          "frp": 342.6,
+          "classification": "critical",
+          "confidence": 99,
+          "brightnessTempK": 546.8,
+          "closestZoneId": "IND-MUNDRA-03",
+          "closestZoneDistKm": null,
+          "facilityName": "Mundra Port Tank Farm"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-22T07:02:39.909Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "MODIS",
+      "area": "India",
+      "totalReceived": 3,
+      "events": [
+        {
+          "id": "evt-j-1",
+          "timestamp": "2026-11-21T07:02:39.909Z",
+          "lat": 22.4707,
+          "lon": 70.0577,
+          "frp": 210,
+          "classification": "critical",
+          "confidence": 95,
+          "brightnessTempK": 520,
+          "closestZoneId": "IND-JAM-01",
+          "closestZoneDistKm": null
+        },
+        {
+          "id": "evt-j-2",
+          "timestamp": "2026-11-21T23:50:39.909Z",
+          "lat": 22.471,
+          "lon": 70.058,
+          "frp": 60,
+          "classification": "warning",
+          "confidence": 85,
+          "brightnessTempK": 390,
+          "closestZoneId": "IND-JAM-01",
+          "closestZoneDistKm": null
+        },
+        {
+          "id": "evt-j-3",
+          "timestamp": "2026-11-22T19:02:39.909Z",
+          "lat": 22.4705,
+          "lon": 70.0575,
+          "frp": 18,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": "IND-JAM-01",
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.915Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "evt-fp-1",
+          "timestamp": "2026-11-23T19:02:34.909Z",
+          "lat": 19.076,
+          "lon": 72.8777,
+          "frp": 5,
+          "classification": "false_positive",
+          "confidence": 40,
+          "brightnessTempK": 300,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-0",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20,
+          "lon": 70,
+          "frp": 10,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-1",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20.01,
+          "lon": 70.01,
+          "frp": 11,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-2",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20.02,
+          "lon": 70.02,
+          "frp": 12,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-3",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20.03,
+          "lon": 70.03,
+          "frp": 13,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-4",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20.04,
+          "lon": 70.04,
+          "frp": 14,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-5",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20.05,
+          "lon": 70.05,
+          "frp": 15,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-6",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20.06,
+          "lon": 70.06,
+          "frp": 16,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-7",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20.07,
+          "lon": 70.07,
+          "frp": 17,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-8",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20.08,
+          "lon": 70.08,
+          "frp": 18,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-11-23T19:02:39.923Z",
+      "source": "NASA_FIRMS",
+      "sensorProduct": "VIIRS_NOAA20_NRT",
+      "area": "world",
+      "totalReceived": 1,
+      "events": [
+        {
+          "id": "concurrent-9",
+          "timestamp": "2026-11-23T19:02:39.923Z",
+          "lat": 20.09,
+          "lon": 70.09,
+          "frp": 19,
+          "classification": "safe",
+          "confidence": 70,
+          "brightnessTempK": 310,
+          "closestZoneId": null,
+          "closestZoneDistKm": null
+        }
+      ]
+    }
+  ]
+}

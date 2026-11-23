@@ -1,10 +1,12 @@
 /**
  * NASA FIRMS Live Active Fire Ingestion Service
- * Multi-channel resilient fetcher that guarantees CORS-free fetching:
- * 1. FastAPI Backend server-to-server proxy (/api/v1/firms/live)
- * 2. Vite Dev Server reverse proxy (/nasa-firms-proxy)
- * 3. Public CORS proxy relay (corsproxy.io / allorigins)
- * 4. Direct NASA API fetch
+ * 
+ * SECURITY: All NASA API calls go through the backend server.
+ * The NASA MAP_KEY is NEVER stored in or sent to the browser.
+ * 
+ * Channels:
+ * 1. Backend proxy (/api/v1/firms/live) — key stored server-side
+ * 2. Fallback to mock data if backend is unreachable
  * 
  * Supported sources:
  * - VIIRS_NOAA20_NRT (VIIRS 375m NOAA-20 NRT)
@@ -97,7 +99,6 @@ export function parseFirmsCSV(csvText) {
   if (rawRows.length === 0) return [];
 
   // For global feeds, sort by thermal power (FRP) and take top 250 most energetic anomalies
-  // to ensure smooth 60 FPS performance while keeping all major alerts visible
   rawRows.sort((a, b) => b.frp - a.frp);
   const selectedRows = rawRows.length > 250 ? rawRows.slice(0, 250) : rawRows;
 
@@ -228,123 +229,111 @@ export function parseFirmsCSV(csvText) {
 }
 
 /**
- * Multi-channel fetch helper to guarantee response across network environments
+ * Check if NASA key is configured on the backend server
  */
-async function fetchWithMultiChannelFallback(cleanKey, source = "VIIRS_NOAA20_NRT", area = "world", dayRange = 2) {
-  const areaFormatted = area.trim();
-  const nasaDirectUrl = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${cleanKey}/${source}/${areaFormatted}/${dayRange}`;
-
-  const channels = [
-    // Channel 1: Vite Dev Server Proxy (Zero CORS, 14s timeout)
-    {
-      name: "Vite Dev Server Proxy",
-      url: `/nasa-firms-proxy/api/area/csv/${cleanKey}/${source}/${areaFormatted}/${dayRange}`,
-      isJson: false
-    },
-    // Channel 2: Direct NASA API
-    {
-      name: "Direct NASA API",
-      url: nasaDirectUrl,
-      isJson: false
-    },
-    // Channel 3: Public CORS-Relay 1 (corsproxy.io)
-    {
-      name: "CORS Relay Proxy",
-      url: `https://corsproxy.io/?${encodeURIComponent(nasaDirectUrl)}`,
-      isJson: false
-    },
-    // Channel 4: Public CORS-Relay 2 (allorigins.win)
-    {
-      name: "AllOrigins Relay",
-      url: `https://api.allorigins.win/raw?url=${encodeURIComponent(nasaDirectUrl)}`,
-      isJson: false
-    },
-    // Channel 5: FastAPI Backend Proxy
-    {
-      name: "FastAPI Backend Proxy",
-      url: `${API_BASE_URL}/api/v1/firms/live?map_key=${cleanKey}&area=${areaFormatted}&source=${source}&days=${dayRange}`,
-      isJson: true
+export async function checkNasaKeyStatus() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/firms/status`, {
+      method: "GET",
+      signal: AbortSignal.timeout(5000)
+    });
+    if (res.ok) {
+      return await res.json();
     }
-  ];
-
-  let lastError = null;
-
-  for (const ch of channels) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 14000);
-
-      const res = await fetch(ch.url, {
-        method: "GET",
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        if (ch.isJson) {
-          const json = await res.json();
-          if (json.hotspots && json.hotspots.length > 0) {
-            return { text: null, jsonHotspots: json.hotspots, channel: ch.name };
-          }
-        } else {
-          const text = await res.text();
-          // Check for NASA error responses
-          if (text.includes("Invalid MAP_KEY")) {
-            throw new Error("NASA FIRMS Error: Invalid MAP_KEY. Please verify your 32-character key at https://firms.modaps.eosdis.nasa.gov/api/map_key");
-          }
-          if (text.includes("latitude,longitude") || text.includes("latitude")) {
-            return { text, jsonHotspots: null, channel: ch.name };
-          }
-        }
-      }
-    } catch (err) {
-      if (err.message && err.message.includes("Invalid MAP_KEY")) {
-        throw err;
-      }
-      lastError = err;
-      // Continue to next channel
-    }
+  } catch {
+    // Backend not reachable
   }
-
-  throw lastError || new Error("Unable to connect to NASA FIRMS API across all connection channels. Please check network connectivity and key.");
+  return { configured: false, keyLength: 0 };
 }
 
 /**
- * Main function to fetch live active fire hotspots from NASA FIRMS API
- * Defaults to global 'world' coverage and 2-day satellite pass
+ * Send NASA MAP_KEY to the backend for secure storage
  */
-export async function fetchLiveFirmsData(mapKey, area = "world", dayRange = 2, source = "VIIRS_NOAA20_NRT") {
-  if (!mapKey || mapKey.trim() === "" || mapKey === "DEMO_MAP_KEY" || mapKey === "YOUR_NASA_FIRMS_MAP_KEY_HERE") {
-    return mockHotspots;
+export async function setNasaKeyOnServer(key) {
+  const res = await fetch(`${API_BASE_URL}/api/v1/firms/key`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key }),
+    signal: AbortSignal.timeout(5000)
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Unknown error" }));
+    throw new Error(err.error || `Server returned HTTP ${res.status}`);
   }
 
-  const cleanKey = mapKey.trim().replace(/['"\s]/g, "");
+  return await res.json();
+}
 
-  if (cleanKey.length < 16) {
-    throw new Error("Invalid NASA MAP_KEY length. NASA keys are typically 32 alphanumeric characters.");
-  }
-
+/**
+ * Clear NASA MAP_KEY from the backend
+ */
+export async function clearNasaKeyOnServer() {
   try {
-    const result = await fetchWithMultiChannelFallback(cleanKey, source, area, dayRange);
+    await fetch(`${API_BASE_URL}/api/v1/firms/key`, {
+      method: "DELETE",
+      signal: AbortSignal.timeout(5000)
+    });
+  } catch {
+    // Silently fail if backend is unreachable
+  }
+}
 
-    if (result.jsonHotspots && result.jsonHotspots.length > 0) {
-      return result.jsonHotspots;
+/**
+ * Main function to fetch live active fire hotspots via the backend proxy
+ * The NASA MAP_KEY is stored on the server — the frontend never sees it.
+ */
+export async function fetchLiveFirmsData(area = "world", dayRange = 2, source = "VIIRS_NOAA20_NRT") {
+  try {
+    const params = new URLSearchParams({
+      source,
+      area: area.trim(),
+      days: String(dayRange)
+    });
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/firms/live?${params}`, {
+      method: "GET",
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      if (errBody.error && errBody.error.includes("Invalid MAP_KEY")) {
+        throw new Error("NASA FIRMS Error: Invalid MAP_KEY. Please verify your key at https://firms.modaps.eosdis.nasa.gov/api/map_key");
+      }
+      if (errBody.error && errBody.error.includes("No NASA MAP_KEY")) {
+        // No key configured — return mock data
+        return mockHotspots;
+      }
+      throw new Error(errBody.error || `Backend returned HTTP ${res.status}`);
     }
 
-    if (result.text) {
-      const parsed = parseFirmsCSV(result.text);
+    const contentType = res.headers.get("content-type") || "";
+
+    if (contentType.includes("text/csv")) {
+      const csvText = await res.text();
+      const parsed = parseFirmsCSV(csvText);
       if (parsed.length > 0) {
         return parsed;
+      }
+    } else if (contentType.includes("application/json")) {
+      const json = await res.json();
+      if (json.hotspots && json.hotspots.length > 0) {
+        return json.hotspots;
       }
     }
   } catch (err) {
     if (err.message && err.message.includes("Invalid MAP_KEY")) {
       throw err;
     }
-    console.warn("NASA live fetch encountered warning, combining with active global alerts:", err);
+    console.warn("NASA live fetch via backend encountered warning:", err);
   }
 
-  // Fallback to active global alert hotspots if live satellite swath returned 0 points
+  // Fallback to mock data
   return mockHotspots;
 }

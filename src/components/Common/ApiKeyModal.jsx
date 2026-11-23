@@ -16,7 +16,6 @@ import { useThermaTwin } from "../../context/ThermaTwinContext";
 
 export function ApiKeyModal({ isOpen, onClose }) {
   const {
-    nasaMapKey,
     updateNasaMapKey,
     clearNasaMapKey,
     isNasaKeyConfigured,
@@ -25,7 +24,7 @@ export function ApiKeyModal({ isOpen, onClose }) {
   } = useThermaTwin();
 
   const isDark = theme === "dark";
-  const [inputKey, setInputKey] = useState(nasaMapKey || "");
+  const [inputKey, setInputKey] = useState("");
   const [selectedSource, setSelectedSource] = useState("VIIRS_NOAA20_NRT");
   const [selectedArea, setSelectedArea] = useState("world");
   const [selectedDays, setSelectedDays] = useState(2);
@@ -53,7 +52,7 @@ export function ApiKeyModal({ isOpen, onClose }) {
     setErrorMsg("");
     setDiagnosticLogs([
       `[1/4] Key format verified (${cleanKey.length} chars)`,
-      `[2/4] Connecting to NASA FIRMS Area API (${selectedArea === "world" ? "Global World" : "Regional Area"})...`
+      `[2/4] Sending key to AGNI-X backend (server-side secure storage)...`
     ]);
 
     try {
@@ -61,7 +60,7 @@ export function ApiKeyModal({ isOpen, onClose }) {
       
       setDiagnosticLogs((prev) => [
         ...prev,
-        `[3/4] NASA response received successfully!`,
+        `[3/4] Key saved on server. NASA satellite feed fetched via backend proxy!`,
         `[4/4] Ingested ${hotspots.length} active fire alert dots onto map & 3D globe.`
       ]);
 
@@ -148,8 +147,8 @@ export function ApiKeyModal({ isOpen, onClose }) {
               </div>
               <p className={isDark ? "text-slate-400" : "text-slate-600"}>
                 {isNasaKeyConfigured
-                  ? "Dashboard is actively connected to NASA satellite feeds. Enter a new key below to update."
-                  : "Showing calibrated baseline data. Paste your NASA MAP_KEY below to fetch live fire feeds."}
+                  ? "NASA MAP_KEY is securely stored on the backend server. Enter a new key below to update."
+                  : "Showing calibrated baseline data. Paste your NASA MAP_KEY below — it will be sent to the server, not stored in the browser."}
               </p>
             </div>
           </div>
@@ -296,7 +295,7 @@ export function ApiKeyModal({ isOpen, onClose }) {
                 <span>Reset Key</span>
               </button>
             ) : (
-              <span className="text-[10px] text-slate-400">Key stored locally in browser</span>
+              <span className="text-[10px] text-slate-400">Key stored securely on server</span>
             )}
 
             <div className="flex items-center gap-2">

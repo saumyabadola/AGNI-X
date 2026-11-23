@@ -4,7 +4,7 @@ import { mockIndustrialZones } from "../data/mockIndustrialZones";
 import { mockRegionalWeather, defaultGlobalWeather } from "../data/mockWeather";
 import { mockSimulationScenarios } from "../data/mockSimulationScenarios";
 import { fetchLiveHotspots, dispatchERSSWebhook } from "../services/api";
-import { fetchLiveFirmsData } from "../services/firmsService";
+import { fetchLiveFirmsData, checkNasaKeyStatus, setNasaKeyOnServer, clearNasaKeyOnServer } from "../services/firmsService";
 import { fetchLiveWeather } from "../services/weatherService";
 import { fetchLiveOsmIndustrialZones } from "../services/osmService";
 import { worldCountries } from "../data/worldCountries";
@@ -207,36 +207,26 @@ export function ThermaTwinProvider({ children }) {
     return await fetchLiveOsmForLocation(mapCenter[0], mapCenter[1], 30);
   };
 
-  // NASA FIRMS Live MAP_KEY State
-  const [nasaMapKey, setNasaMapKey] = useState(() => {
-    try {
-      const stored = localStorage.getItem("nasa_firms_map_key");
-      if (stored && stored.trim() !== "") return stored.trim();
-      const envKey = import.meta.env.VITE_NASA_FIRMS_MAP_KEY;
-      if (envKey && envKey.trim() !== "" && envKey !== "YOUR_NASA_FIRMS_MAP_KEY_HERE") return envKey.trim();
-      return "";
-    } catch {
-      return "";
-    }
-  });
+  // NASA FIRMS Key Status (key is stored SERVER-SIDE, never in browser)
+  const [isNasaKeyConfigured, setIsNasaKeyConfigured] = useState(false);
 
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-  const isNasaKeyConfigured = Boolean(
-    nasaMapKey &&
-    nasaMapKey.trim() !== "" &&
-    nasaMapKey !== "YOUR_NASA_FIRMS_MAP_KEY_HERE" &&
-    nasaMapKey !== "DEMO_MAP_KEY"
-  );
 
-  // Update NASA MAP_KEY and immediately fetch live satellite feed
+  // Check if backend has a NASA key configured on mount
+  useEffect(() => {
+    checkNasaKeyStatus().then((status) => {
+      setIsNasaKeyConfigured(status.configured);
+    });
+  }, []);
+
+  // Send NASA MAP_KEY to the backend for secure storage, then fetch live data
   const updateNasaMapKey = async (key, area = "world", source = "VIIRS_NOAA20_NRT", dayRange = 2) => {
-    const cleanKey = key.trim().replace(/['"\s]/g, "");
-    const liveHotspots = await fetchLiveFirmsData(cleanKey, area, dayRange, source);
-    
-    setNasaMapKey(cleanKey);
-    try {
-      localStorage.setItem("nasa_firms_map_key", cleanKey);
-    } catch {}
+    // Step 1: Send key to backend (it stays there, never returns to frontend)
+    await setNasaKeyOnServer(key);
+    setIsNasaKeyConfigured(true);
+
+    // Step 2: Fetch live data through the backend proxy (key is used server-side)
+    const liveHotspots = await fetchLiveFirmsData(area, dayRange, source);
 
     if (liveHotspots && liveHotspots.length > 0) {
       setHotspots(liveHotspots);
@@ -305,10 +295,8 @@ export function ThermaTwinProvider({ children }) {
   }, [selectedCountry, industrialZones]);
 
   const clearNasaMapKey = () => {
-    setNasaMapKey("");
-    try {
-      localStorage.removeItem("nasa_firms_map_key");
-    } catch {}
+    clearNasaKeyOnServer();
+    setIsNasaKeyConfigured(false);
     setHotspots(mockHotspots);
     setSelectedHotspotId("FIRMS-MUN-8821");
     setSelectedCountry(null);
@@ -316,11 +304,11 @@ export function ThermaTwinProvider({ children }) {
     setMapZoom(2);
   };
 
-  // Central fetchHotspots function supporting live NASA FIRMS API, FastAPI, & fallback
+  // Central fetchHotspots function — uses backend proxy (key stays server-side)
   const fetchHotspots = async () => {
     if (isNasaKeyConfigured) {
       try {
-        const liveHotspots = await fetchLiveFirmsData(nasaMapKey, "world", 2);
+        const liveHotspots = await fetchLiveFirmsData("world", 2);
         if (liveHotspots && liveHotspots.length > 0) {
           setHotspots(liveHotspots);
           setLastSyncTime(new Date());
@@ -328,7 +316,7 @@ export function ThermaTwinProvider({ children }) {
           return;
         }
       } catch (err) {
-        console.warn("Direct NASA FIRMS fetch attempt error, falling back to baseline:", err);
+        console.warn("Backend NASA FIRMS fetch error, falling back to baseline:", err);
       }
     }
 
@@ -349,7 +337,7 @@ export function ThermaTwinProvider({ children }) {
     fetchHotspots();
     const interval = setInterval(fetchHotspots, 60000);
     return () => clearInterval(interval);
-  }, [nasaMapKey]);
+  }, [isNasaKeyConfigured]);
 
   // Filtered hotspots based on search and status tabs
   const filteredHotspots = useMemo(() => {
@@ -369,13 +357,18 @@ export function ThermaTwinProvider({ children }) {
     });
   }, [hotspots, searchQuery, statusFilter, dispatchedHotspotIds]);
 
-  // Top Metrics Calculation
+  // Top Metrics Calculation — now uses real classification data from backend
   const metrics = useMemo(() => {
     const total = hotspots.length;
     const critical = hotspots.filter((h) => h.status === "critical").length;
     const warning = hotspots.filter((h) => h.status === "warning").length;
     const safe = hotspots.filter((h) => h.status === "safe").length;
+    const falsePositive = hotspots.filter((h) => h.classification === "false_positive").length;
     const dispatched = dispatchedHotspotIds.size;
+
+    // Real false-positive filtering: safe routine flares + classified false positives
+    const filtered = safe + falsePositive;
+    const filterRate = total > 0 ? ((filtered / total) * 100).toFixed(1) : "0.0";
 
     return {
       totalActiveHotspots: total,
@@ -384,8 +377,8 @@ export function ThermaTwinProvider({ children }) {
       runawayRisks: warning,
       safeRoutineFlares: safe,
       dispatchedCount: dispatched,
-      falsePositivesFiltered: 42 + safe, // Baseline routine flares properly suppressed
-      filteringEfficiency: "94.8%"
+      falsePositivesFiltered: filtered,
+      filteringEfficiency: filterRate + "%"
     };
   }, [hotspots, industrialZones, dispatchedHotspotIds]);
 
@@ -558,7 +551,6 @@ export function ThermaTwinProvider({ children }) {
         theme,
         setTheme,
         toggleTheme,
-        nasaMapKey,
         updateNasaMapKey,
         clearNasaMapKey,
         isNasaKeyConfigured,
