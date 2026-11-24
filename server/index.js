@@ -177,7 +177,11 @@ app.get("/api/v1/firms/live", async (req, res) => {
     const rawEvents = parseCSVToEvents(csvText);
     console.log(`[AGNI-X] Parsed ${rawEvents.length} raw events from NASA CSV`);
 
-    const classified = rawEvents.map(evt => classifyFireEvent(evt, INDUSTRIAL_ZONES));
+    const classified = rawEvents.map(evt => {
+      const result = classifyFireEvent(evt, INDUSTRIAL_ZONES);
+      result.event = evt;
+      return result;
+    });
     
     // Sort by weighted score (highest risk first), take top 250
     classified.sort((a, b) => (b.confidence / 100 * (b.classification === "critical" ? 3 : b.classification === "warning" ? 2 : 1)) -
